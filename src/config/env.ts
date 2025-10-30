@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import dotenv from 'dotenv';
+
+// Ensure .env is loaded before validation
+dotenv.config();
 
 const EnvSchema = z.object({
 	NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),

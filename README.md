@@ -78,6 +78,29 @@ curl http://localhost:4000/api/v1/health
 ```
 Expected: `{ "status": "ok" }`
 
+## Environment Variables
+
+The server validates required environment variables via Zod in `src/config/env.ts`. Ensure these are set in your shell or a local `.env` file (see the setup section above for options).
+
+- `NODE_ENV` — `development` | `test` | `production` (default: `development`)
+- `PORT` — server port (default: `4000`)
+- `DATABASE_URL` — PostgreSQL connection string (required)
+- `JWT_SECRET` — secret for JWT signing (required)
+- `MUX_TOKEN_ID` — Mux access token ID (required)
+- `MUX_TOKEN_SECRET` — Mux access token secret (required)
+- `CORS_ORIGIN` — allowed origin for CORS (required)
+
+Example `.env`:
+```
+NODE_ENV=development
+PORT=4000
+DATABASE_URL=postgres://user:pass@localhost:5432/microdrama
+JWT_SECRET=change_me
+MUX_TOKEN_ID=your_mux_id
+MUX_TOKEN_SECRET=your_mux_secret
+CORS_ORIGIN=http://localhost:8081
+```
+
 ### API Endpoints
 
 - GET `/api/v1/health`
