@@ -1,170 +1,178 @@
-# Micro-Drama Server - Phases 1 & 2A
+# Micro-Drama Server
 
-Phase 1 (Data Layer) is implemented, and Phase 2A (Backend API) has been added: Express server with routes, controllers, services, validation, and middleware.
+Node.js + Express backend server for the micro-drama streaming application.
 
-## Setup
+## Prerequisites
 
-### Prerequisites
+- **Node.js** (LTS version recommended)
+- **PostgreSQL** (12+)
+- **npm** or **yarn**
+- **Mux account** (for video streaming)
+  - Get credentials from [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
 
-- Node.js (LTS)
-- PostgreSQL (Windows version already installed)
-- npm or yarn
+## Setup Instructions
 
-### Installation
+### 1. Install Dependencies
 
-1. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Install server runtime dependencies (Express, security, CORS, logging):
-```bash
-npm i express cors helmet pino pino-http pino-pretty
-npm i -D @types/express @types/cors @types/helmet
-```
+### 2. Set Up Database
 
-3. Create the database (or use pgAdmin/psql):
+**Option A: Using psql (command line)**
 ```bash
 createdb microdrama
 ```
 
-4. Set environment variables:
-- Option A (PowerShell session):
-```powershell
-$env:NODE_ENV="development"
-$env:PORT="4000"
-$env:DATABASE_URL="postgres://user:pass@localhost:5432/microdrama"
-$env:JWT_SECRET="change_me"
-$env:MUX_TOKEN_ID="your_mux_id"
-$env:MUX_TOKEN_SECRET="your_mux_secret"
-$env:CORS_ORIGIN="http://localhost:8081"
+**Option B: Using pgAdmin**
+- Open pgAdmin
+- Create a new database named `microdrama`
+
+**Option C: Using SQL**
+```sql
+CREATE DATABASE microdrama;
 ```
-- Option B (dotenv): create a `.env` file in `server/` with the same keys above and run dev with `-r dotenv/config` (see Run section).
 
-### Running Migrations
+### 3. Configure Environment Variables
 
-Apply database migrations:
+Create a `.env` file in the `server/` directory:
+
+```env
+NODE_ENV=development
+PORT=4000
+DATABASE_URL=postgres://username:password@localhost:5432/microdrama
+JWT_SECRET=your_jwt_secret_here_change_in_production
+MUX_TOKEN_ID=your_mux_token_id
+MUX_TOKEN_SECRET=your_mux_token_secret
+CORS_ORIGIN=http://localhost:8081
+```
+
+**Important Notes:**
+- Replace `username` and `password` with your PostgreSQL credentials
+- Generate a secure random string for `JWT_SECRET` (e.g., use `openssl rand -hex 32`)
+- Get Mux credentials from [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
+- For mobile development, you may need to update `CORS_ORIGIN` to include your Expo dev server origin
+
+**Optional:** For signed playback URLs (Mux signed tokens):
+```env
+MUX_SIGNING_KEY_ID=your_signing_key_id
+MUX_SIGNING_KEY_PRIVATE=your_base64_encoded_private_key
+```
+
+### 4. Run Database Migrations
+
 ```bash
 npm run migrate:up
 ```
 
-Rollback migrations (drops all tables):
-```bash
-npm run migrate:down
-```
+This creates all required tables:
+- `shows` - Show metadata
+- `episodes` - Episode information with Mux playback IDs
+- `ratings` - Like/dislike ratings
+- `watch_history` - Episode watch status
 
-### Seeding the Database
+### 5. Seed the Database (Optional)
 
-Populate the database with sample data:
+Populate with sample data:
+
 ```bash
 npm run seed
 ```
 
-### Run the Server (Phase 2A)
+**Note:** This requires Mux assets to be configured. See [MUX_SETUP_STEP_BY_STEP.md](./docs/MUX_SETUP_STEP_BY_STEP.md) for detailed Mux setup.
 
-Start in dev mode (if envs set in shell):
+### 6. Start the Server
+
+**Development mode:**
 ```bash
 npm run dev
 ```
 
-Start in dev mode using `.env` (dotenv preload):
+**Production mode:**
 ```bash
-npx ts-node-dev --respawn --transpile-only -r dotenv/config src/server.ts
+npm run build
+npm start
 ```
 
-Health check:
+### 7. Verify Server is Running
+
+Check the health endpoint:
+
 ```bash
 curl http://localhost:4000/api/v1/health
 ```
-Expected: `{ "status": "ok" }`
 
-## Environment Variables
-
-The server validates required environment variables via Zod in `src/config/env.ts`. Ensure these are set in your shell or a local `.env` file (see the setup section above for options).
-
-- `NODE_ENV` — `development` | `test` | `production` (default: `development`)
-- `PORT` — server port (default: `4000`)
-- `DATABASE_URL` — PostgreSQL connection string (required)
-- `JWT_SECRET` — secret for JWT signing (required)
-- `MUX_TOKEN_ID` — Mux access token ID (required) - Get from [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
-- `MUX_TOKEN_SECRET` — Mux access token secret (required) - Get from [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
-- `CORS_ORIGIN` — allowed origin for CORS (required)
-
-**Note**: For Mux streaming setup, see [MUX_STREAMING_SETUP.md](./docs/MUX_STREAMING_SETUP.md) or [MUX_SETUP_STEP_BY_STEP.md](./docs/MUX_SETUP_STEP_BY_STEP.md).
-
-Example `.env`:
-```
-NODE_ENV=development
-PORT=4000
-DATABASE_URL=postgres://user:pass@localhost:5432/microdrama
-JWT_SECRET=change_me
-MUX_TOKEN_ID=your_mux_id
-MUX_TOKEN_SECRET=your_mux_secret
-CORS_ORIGIN=http://localhost:8081
+Expected response:
+```json
+{ "status": "ok" }
 ```
 
-### API Endpoints
+## Running the Server
 
-- GET `/api/v1/health`
-- GET `/api/v1/shows`
-- GET `/api/v1/shows/:id`
-- GET `/api/v1/shows/:id/episodes?filterBy=all|watched|unwatched&sortBy=title|order|created_at&orderBy=asc|desc`
-- POST `/api/v1/shows/:id/like` body: `{ "ratingValue": 0 | 1 }`
+### Development Mode
+```bash
+npm run dev
+```
+Runs with `ts-node-dev` for hot reloading.
+
+### Production Mode
+```bash
+npm run build
+npm start
+```
+Builds TypeScript and runs compiled JavaScript.
+
+### Test Database Connection
+```bash
+npm run test:connection
+```
 
 ## Project Structure
 
 ```
 server/
 ├── src/
-│   ├── types/             # TypeScript type definitions
-│   │   ├── show.ts
-│   │   ├── episode.ts
-│   │   ├── rating.ts
-│   │   └── filters.ts
-│   ├── repositories/      # Database query functions
-│   │   ├── shows.ts
-│   │   ├── episodes.ts
-│   │   ├── ratings.ts
-│   │   └── watchHistory.ts
-│   ├── services/          # Business logic
-│   │   ├── shows.ts
-│   │   └── ratings.ts
-│   ├── controllers/       # Thin controllers with Zod validation
-│   │   ├── shows.ts
-│   │   └── ratings.ts
-│   ├── routes/            # Express routes (mounted under /api/v1)
-│   │   ├── health.routes.ts
-│   │   ├── shows.routes.ts
-│   │   └── ratings.routes.ts
-│   ├── schemas/           # Zod schemas for params, query, responses
-│   │   ├── shows.schema.ts
-│   │   ├── episodes.schema.ts
-│   │   └── ratings.schema.ts
-│   ├── middleware/        # Security, CORS, logging, error handling
-│   │   ├── errorHandler.ts
-│   │   ├── cors.ts
-│   │   ├── helmet.ts
-│   │   └── requestLogger.ts
-│   ├── config/            # Env, database, logger
-│   │   ├── env.ts
-│   │   ├── database.ts
-│   │   └── logger.ts
-│   └── server.ts          # Express app bootstrap
+│   ├── config/           # Configuration (env, database, logger)
+│   ├── controllers/     # Request handlers
+│   ├── middleware/      # Express middleware (CORS, errors, logging)
+│   ├── repositories/    # Database access layer
+│   ├── routes/          # Route definitions
+│   ├── schemas/         # Zod validation schemas
+│   ├── services/        # Business logic
+│   ├── types/           # TypeScript types
+│   ├── utils/           # Utility functions
+│   └── server.ts        # Express app entry point
 ├── migrations/          # SQL migration files
-│   ├── 001_create_shows_table.sql
-│   ├── 002_create_episodes_table.sql
-│   ├── 003_create_ratings_table.sql
-│   └── 004_create_watch_history_table.sql
-├── scripts/
-│   ├── migrate-up.ts    # Apply migrations
-│   ├── migrate-down.ts # Rollback migrations
-│   └── seed.ts          # Seed sample data
+├── scripts/            # Utility scripts (migrate, seed, etc.)
 └── package.json
 ```
 
+## API Endpoints
+
+All endpoints are prefixed with `/api/v1`.
+
+### Health Check
+- `GET /api/v1/health` - Server health status
+
+### Shows
+- `GET /api/v1/shows` - Get all shows with like/dislike counts
+- `GET /api/v1/shows/:id` - Get show by ID with episodes
+
+### Episodes
+- `GET /api/v1/shows/:id/episodes` - Get episodes for a show
+  - Query params:
+    - `filterBy`: `all` | `watched` | `unwatched` (default: `all`)
+    - `sortBy`: `title` | `order` | `created_at` (default: `order`)
+    - `orderBy`: `asc` | `desc` (default: `asc`)
+
+### Ratings
+- `POST /api/v1/shows/:id/like` - Like or dislike a show
+  - Body: `{ "ratingValue": 0 | 1 }` (0 = dislike, 1 = like)
+
 ## Database Schema
 
-### Shows Table
+### Shows
 - `id` (UUID, primary key)
 - `title` (VARCHAR)
 - `description` (TEXT, nullable)
@@ -172,51 +180,82 @@ server/
 - `created_at` (TIMESTAMP)
 - `updated_at` (TIMESTAMP)
 
-### Episodes Table
+### Episodes
 - `id` (UUID, primary key)
-- `show_id` (UUID, foreign key to shows)
+- `show_id` (UUID, foreign key)
 - `title` (VARCHAR)
 - `order` (INTEGER)
-- `mux_playback_id` (VARCHAR)
+- `mux_playback_id` (VARCHAR) - Mux playback ID for HLS streaming
 - `duration_sec` (INTEGER)
 - `thumbnail_url` (VARCHAR, nullable)
 - `created_at` (TIMESTAMP)
 - `updated_at` (TIMESTAMP)
-- Unique constraint on (`show_id`, `order`)
 
-### Ratings Table
+### Ratings
 - `id` (UUID, primary key)
-- `show_id` (UUID, foreign key to shows)
+- `show_id` (UUID, foreign key)
 - `rating_value` (INTEGER, 0 or 1)
 - `created_at` (TIMESTAMP)
 
-### Watch History Table
+### Watch History
 - `id` (UUID, primary key)
-- `episode_id` (UUID, foreign key to episodes, UNIQUE)
+- `episode_id` (UUID, foreign key, unique)
 - `watched` (BOOLEAN, default false)
 - `created_at` (TIMESTAMP)
 - `updated_at` (TIMESTAMP)
 
-## Repository Functions
+## Environment Variables
 
-### Shows Repository (`src/repositories/shows.ts`)
+Required variables (validated on startup):
 
-- `getAllShows(pool)` - Get all shows with computed likes/dislikes
-- `getShowById(pool, id)` - Get show with episodes list
+- `NODE_ENV` - Environment (`development` | `test` | `production`)
+- `PORT` - Server port (default: `4000`)
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - Secret for JWT signing (generate secure random string)
+- `MUX_TOKEN_ID` - Mux access token ID
+- `MUX_TOKEN_SECRET` - Mux access token secret
+- `CORS_ORIGIN` - Allowed origin for CORS
 
-### Episodes Repository (`src/repositories/episodes.ts`)
+Optional variables:
 
-- `getEpisodesByShowId(pool, showId, filters?, sortOptions?)` - Get episodes with filtering and sorting
+- `MUX_SIGNING_KEY_ID` - Mux signing key ID (for signed playback URLs)
+- `MUX_SIGNING_KEY_PRIVATE` - Base64-encoded Mux signing private key
 
-### Ratings Repository (`src/repositories/ratings.ts`)
+## Database Migrations
 
-- `createRating(pool, showId, ratingValue)` - Create a rating (like or dislike)
-- `getRatingCounts(pool, showId)` - Get likes/dislikes counts for a show
+### Apply Migrations
+```bash
+npm run migrate:up
+```
 
-### Watch History Repository (`src/repositories/watchHistory.ts`)
+### Rollback Migrations
+```bash
+npm run migrate:down
+```
 
-- `markEpisodeAsWatched(pool, episodeId)` - Mark episode as watched (upsert)
-- `getWatchStatus(pool, episodeId)` - Get watch status for an episode
+**Warning:** Rollback drops all tables. Use with caution.
+
+## Utility Scripts
+
+### List Mux Assets
+```bash
+npm run list:mux-assets
+```
+
+### Update Mux Playback IDs
+```bash
+npm run update:mux-ids
+```
+
+### Seed Database
+```bash
+npm run seed
+```
+
+### Test Database Connection
+```bash
+npm run test:connection
+```
 
 ## Testing
 
@@ -230,14 +269,47 @@ Run tests in watch mode:
 npm run test:watch
 ```
 
-Tests require a database connection. Set `TEST_DATABASE_URL` environment variable if you want to use a separate test database, otherwise tests will use `DATABASE_URL`.
+## Troubleshooting
 
-Notes:
-- API health route has a smoke test using `supertest` at `src/__tests__/health.test.ts`. It runs as part of `npm test`.
-- To run only the health test:
-```bash
-npx jest src/__tests__/health.test.ts
-```
+### Database Connection Issues
+
+**Problem:** Cannot connect to database
+
+**Solutions:**
+1. Verify PostgreSQL is running: `pg_isready`
+2. Check `DATABASE_URL` format: `postgres://user:pass@host:port/dbname`
+3. Verify credentials are correct
+4. Check PostgreSQL is accepting connections (check `pg_hba.conf`)
+
+### Mux Configuration Issues
+
+**Problem:** Videos not streaming
+
+**Solutions:**
+1. Verify Mux credentials are correct in `.env`
+2. Check Mux assets exist in your Mux dashboard
+3. Verify `mux_playback_id` values in database match Mux asset playback IDs
+4. See [MUX_SETUP_STEP_BY_STEP.md](./docs/MUX_SETUP_STEP_BY_STEP.md) for detailed setup
+
+### Port Already in Use
+
+**Problem:** Port 4000 already in use
+
+**Solutions:**
+1. Change `PORT` in `.env` file
+2. Kill process using port 4000:
+   - Windows: `netstat -ano | findstr :4000` then `taskkill /PID <pid> /F`
+   - macOS/Linux: `lsof -ti:4000 | xargs kill`
+
+### Migration Errors
+
+**Problem:** Migrations fail
+
+**Solutions:**
+1. Ensure database exists
+2. Check database user has CREATE TABLE permissions
+3. Verify no conflicting tables exist
+4. Try running migrations one by one
 
 ## Type Checking
 
@@ -246,14 +318,34 @@ Check TypeScript types:
 npm run typecheck
 ```
 
-## Next Steps
+## Linting
 
-Completed:
-- Phase 1: Data Layer (migrations, repositories, types)
-- Phase 2A: Backend API (Express server, routes, controllers, services, schemas, middleware)
+Run ESLint:
+```bash
+npm run lint
+```
 
-Upcoming:
-- Phase 2B: Mobile App Foundation (Expo setup, navigation, state management)
-- Phase 3: Mobile App UI & Video Playback
-- Phase 4: Integration & Polish
+## Mux Setup
 
+For detailed Mux streaming setup instructions, see:
+- [MUX_SETUP_STEP_BY_STEP.md](./docs/MUX_SETUP_STEP_BY_STEP.md)
+- [MUX_STREAMING_SETUP.md](./docs/MUX_STREAMING_SETUP.md)
+- [MUX_QUICK_START.md](./docs/MUX_QUICK_START.md)
+
+## Production Deployment
+
+1. Set `NODE_ENV=production` in environment
+2. Generate secure `JWT_SECRET`: `openssl rand -hex 32`
+3. Use environment-specific `DATABASE_URL`
+4. Configure proper `CORS_ORIGIN` for your domain
+5. Build: `npm run build`
+6. Start: `npm start`
+
+## Security Notes
+
+- Never commit `.env` file to version control
+- Use strong, random `JWT_SECRET` in production
+- Keep Mux credentials secure
+- Configure CORS appropriately for your domain
+- Use HTTPS in production
+- Consider rate limiting for public endpoints
