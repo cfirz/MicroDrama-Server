@@ -11,6 +11,8 @@ const EnvSchema = z.object({
 	JWT_SECRET: z.string().min(1),
 	MUX_TOKEN_ID: z.string().min(1),
 	MUX_TOKEN_SECRET: z.string().min(1),
+	MUX_SIGNING_KEY_ID: z.string().min(1).optional(),
+	MUX_SIGNING_KEY_PRIVATE: z.string().min(1).optional(),
 	CORS_ORIGIN: z.string().min(1),
 });
 

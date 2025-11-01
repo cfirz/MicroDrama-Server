@@ -13,6 +13,8 @@
     "migrate:down": "node -r ts-node/register scripts/migrate-down.ts",
     "seed": "node -r ts-node/register scripts/seed.ts",
     "test:connection": "node -r ts-node/register scripts/test-connection.ts",
+    "update:mux-ids": "node -r ts-node/register scripts/update-mux-playback-ids.ts",
+    "list:mux-assets": "node -r ts-node/register scripts/list-mux-assets.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
@@ -22,6 +24,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@mux/mux-node": "^12.8.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^5.1.0",

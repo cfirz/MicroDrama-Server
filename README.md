@@ -86,9 +86,11 @@ The server validates required environment variables via Zod in `src/config/env.t
 - `PORT` — server port (default: `4000`)
 - `DATABASE_URL` — PostgreSQL connection string (required)
 - `JWT_SECRET` — secret for JWT signing (required)
-- `MUX_TOKEN_ID` — Mux access token ID (required)
-- `MUX_TOKEN_SECRET` — Mux access token secret (required)
+- `MUX_TOKEN_ID` — Mux access token ID (required) - Get from [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
+- `MUX_TOKEN_SECRET` — Mux access token secret (required) - Get from [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
 - `CORS_ORIGIN` — allowed origin for CORS (required)
+
+**Note**: For Mux streaming setup, see [MUX_STREAMING_SETUP.md](./docs/MUX_STREAMING_SETUP.md) or [MUX_SETUP_STEP_BY_STEP.md](./docs/MUX_SETUP_STEP_BY_STEP.md).
 
 Example `.env`:
 ```
